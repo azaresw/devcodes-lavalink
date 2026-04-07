@@ -143,6 +143,11 @@ export interface ManagerOptions {
   nodes: NodeOptions[];
   /** Discord bot client ID — can also be passed to `manager.init()` */
   clientId?: string;
+  /**
+   * `lavalink-client` compat: `client.id` and `client.username` are read on construction.
+   * Equivalent to setting `clientId` and `clientName`.
+   */
+  client?: { id?: string; username?: string };
   /** Name reported to Lavalink (default: 'devcodes-lavalink/1.0.0') */
   clientName?: string;
   /** Default search platform when the query is not a URL (default: 'ytsearch') */
@@ -168,7 +173,12 @@ export interface ManagerOptions {
    *   guild?.shard.send(payload);
    * }
    */
-  send: (guildId: string, payload: VoiceStatePayload) => void;
+  send?: (guildId: string, payload: VoiceStatePayload) => void;
+  /**
+   * `lavalink-client` compat alias for `send`.
+   * Accepts the same signature — use whichever name you prefer.
+   */
+  sendToShard?: (guildId: string, payload: VoiceStatePayload) => void;
 }
 
 // ── Player ────────────────────────────────────────────────────

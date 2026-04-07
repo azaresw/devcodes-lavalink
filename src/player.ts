@@ -117,7 +117,7 @@ export class LavalinkPlayer {
         self_mute:  this.selfMute,
       },
     };
-    this.manager.options.send(this.guildId, payload);
+    this.manager.options.send!(this.guildId, payload);
     return this;
   }
 
@@ -130,7 +130,7 @@ export class LavalinkPlayer {
     // Pause Lavalink — non-fatal if the player isn't initialised yet
     await this.node.updatePlayer(this.guildId, { paused: true }).catch(() => { /* ok */ });
 
-    this.manager.options.send(this.guildId, {
+    this.manager.options.send!(this.guildId, {
       op: 4,
       d: { guild_id: this.guildId, channel_id: null, self_deaf: false, self_mute: false },
     });

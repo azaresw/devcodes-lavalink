@@ -58,16 +58,22 @@ export class LavalinkManager extends EventEmitter {
   constructor(options: ManagerOptions) {
     super();
 
-    if (typeof options.send !== 'function') {
-      throw new TypeError('[LavalinkManager] `options.send` must be a function');
+    // Resolve send function — accept either `send` or `sendToShard` (lavalink-client compat)
+    const sendFn = options.send ?? options.sendToShard;
+    if (typeof sendFn !== 'function') {
+      throw new TypeError('[LavalinkManager] `options.send` (or `options.sendToShard`) must be a function');
     }
+    // Normalise onto `send` so the rest of the codebase only reads options.send
+    options.send = sendFn;
+
     if (!options.nodes?.length) {
       throw new TypeError('[LavalinkManager] At least one node must be provided');
     }
 
     this.options    = options;
-    this.clientId   = options.clientId  ?? '';
-    this.clientName = options.clientName ?? 'devcodes-lavalink/1.0.0';
+    // Accept `client.id` / `client.username` (lavalink-client compat) alongside clientId/clientName
+    this.clientId   = options.clientId ?? options.client?.id ?? '';
+    this.clientName = options.clientName ?? options.client?.username ?? 'devcodes-lavalink/1.0.0';
 
     // Register nodes
     for (const nodeOpts of options.nodes) this.addNode(nodeOpts);
@@ -182,6 +188,22 @@ export class LavalinkManager extends EventEmitter {
     } else if (packet.t === 'VOICE_SERVER_UPDATE') {
       this._handleVoiceServerUpdate(packet.d as VoiceServerUpdateData);
     }
+  }
+
+  /**
+   * `lavalink-client` compat alias for `handleRawPacket()`.
+   * Both names are identical in behaviour — use whichever your bot already calls.
+   *
+   * @example
+   * ```ts
+   * // lavalink-client style:
+   * client.on('raw', (d) => manager.sendRawData(d));
+   * // devcodes-lavalink style:
+   * client.on('raw', (d) => manager.handleRawPacket(d));
+   * ```
+   */
+  sendRawData(packet: { t?: string; d?: unknown }): void {
+    this.handleRawPacket(packet);
   }
 
   // ── Internal — called by LavalinkNode ─────────────────────────
