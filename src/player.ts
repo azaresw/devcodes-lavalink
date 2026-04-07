@@ -475,10 +475,17 @@ export class LavalinkPlayer {
    * Searches for a related track using the seed track's title + author.
    */
   private async _triggerAutoplay(seedTrack: Track): Promise<void> {
-    // manager.search() auto-prepends the platform prefix, so pass a plain query
-    const query = `${seedTrack.info.title} ${seedTrack.info.author} mix`;
-    const result = await this.manager.search(query).catch(() => null);
+    // Use a clean author-based query — the full video title has noise like
+    // '(Official Video)', 'ft. X', that makes searches return nothing.
+    const cleanTitle = seedTrack.info.title
+      .replace(/\(.*?\)/g, '')          // remove (Official Video) etc.
+      .replace(/\[.*?\]/g, '')          // remove [Lyrics] etc.
+      .replace(/\bfeat?\.?\b.*/i, '')   // remove "ft. Artist" tails
+      .trim();
+    const author = seedTrack.info.author.replace(/\s*-\s*Topic$/, ''); // strip YouTube "-  Topic" suffix
+    const query  = `${author} ${cleanTitle} mix`;
 
+    const result = await this.manager.search(query).catch(() => null);
     const tracks = result?.tracks ?? [];
 
     // Prefer any track that isn't identical to the seed; fall back to [0]
