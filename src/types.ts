@@ -104,7 +104,15 @@ export interface NodeStats {
 }
 
 // ── Manager ───────────────────────────────────────────────────
-
+/**
+ * Minimal interface for a discord.js-compatible client.
+ * Used by `LavalinkManager.useDiscordJS()` — does NOT require discord.js as a dependency.
+ */
+export interface DiscordJSClientLike {
+  user: { id: string } | null;
+  once(event: 'ready', listener: () => void): this;
+  on(event: 'raw', listener: (packet: { t?: string; d?: unknown }) => void): this;
+}
 export interface ManagerOptions {
   /** Lavalink node(s) to connect to */
   nodes: NodeOptions[];

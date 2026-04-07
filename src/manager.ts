@@ -11,6 +11,7 @@ import type {
   VoiceStateData,
   VoiceServerUpdateData,
   PersistedPlayerState,
+  DiscordJSClientLike,
 } from './types';
 
 /**
@@ -360,6 +361,37 @@ export class LavalinkManager extends EventEmitter {
     for (const player of this.players.values()) {
       this._savePlayer(player);
     }
+  }
+
+  // ── Discord.js integration helper ────────────────────────────
+
+  /**
+   * One-call discord.js wiring — replaces the manual `init` + `raw` setup.
+   *
+   * Automatically:
+   * - Calls `manager.init(client.user.id)` once the client is ready
+   * - Forwards all raw gateway packets to `handleRawPacket()`
+   *
+   * @example
+   * ```ts
+   * const manager = new LavalinkManager({ ... });
+   * manager.useDiscordJS(client); // ← replaces 4 lines of boilerplate
+   * ```
+   */
+  useDiscordJS(client: DiscordJSClientLike): this {
+    const wire = () => {
+      this.init(client.user!.id);
+      client.on('raw', (packet: { t?: string; d?: unknown }) =>
+        this.handleRawPacket(packet),
+      );
+    };
+    // If the client is already logged in (e.g. useDiscordJS called after ready)
+    if (client.user) {
+      wire();
+    } else {
+      client.once('ready', wire);
+    }
+    return this;
   }
 
   // ── Typed EventEmitter overloads ─────────────────────────────

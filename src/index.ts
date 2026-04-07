@@ -53,6 +53,9 @@ export type {
 
   // Events
   ManagerEventMap,
+
+  // Discord.js integration
+  DiscordJSClientLike,
 } from './types';
 
 export type { PlayerState } from './player';
