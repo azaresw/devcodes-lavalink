@@ -1,0 +1,56 @@
+{
+  "name": "devcodes-lavalink",
+  "version": "1.0.0",
+  "description": "A full-featured Lavalink v4 client for discord.js — zero config, TypeScript-first, auto-reconnect, and built-in player persistence that survives full system reboots.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "lavalink",
+    "discord",
+    "discord.js",
+    "music",
+    "music-bot",
+    "audio",
+    "devcodes",
+    "typescript",
+    "player-persistence",
+    "lavalink-v4"
+  ],
+  "author": "azaresw",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/azaresw/devcodes-lavalink.git"
+  },
+  "bugs": {
+    "url": "https://discord.gg/ESh2Dp2xX9"
+  },
+  "dependencies": {
+    "ws": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "discord.js": "^14.0.0"
+  },
+  "peerDependenciesMeta": {
+    "discord.js": {
+      "optional": true
+    }
+  }
+}
