@@ -365,6 +365,11 @@ export class LavalinkManager extends EventEmitter {
         const track = player.queue.shift()!;
         await player.play(track);
 
+        // Re-apply filters to Lavalink server (play() only sends volume)
+        if (pending.filters && Object.keys(pending.filters).length > 0) {
+          await player.setFilters(pending.filters).catch(() => { /* non-fatal */ });
+        }
+
         // Seek to saved position if meaningful (>3 s and not a stream)
         if (
           pending.savedPosition > 3_000 &&
