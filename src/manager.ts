@@ -12,6 +12,8 @@ import type {
   VoiceServerUpdateData,
   PersistedPlayerState,
   DiscordJSClientLike,
+  ErisClientLike,
+  OceanicClientLike,
 } from './types';
 
 /**
@@ -386,6 +388,62 @@ export class LavalinkManager extends EventEmitter {
       );
     };
     // If the client is already logged in (e.g. useDiscordJS called after ready)
+    if (client.user) {
+      wire();
+    } else {
+      client.once('ready', wire);
+    }
+    return this;
+  }
+
+  /**
+   * One-call Eris wiring — replaces the manual `init` + `rawWS` setup.
+   *
+   * Automatically:
+   * - Calls `manager.init(client.user.id)` once the client is ready
+   * - Forwards all raw `rawWS` packets to `handleRawPacket()`
+   *
+   * @example
+   * ```ts
+   * const manager = new LavalinkManager({ ... });
+   * manager.useEris(client); // ← replaces 4 lines of boilerplate
+   * ```
+   */
+  useEris(client: ErisClientLike): this {
+    const wire = () => {
+      this.init(client.user!.id);
+      client.on('rawWS', (packet: { t?: string; d?: unknown }) =>
+        this.handleRawPacket(packet),
+      );
+    };
+    if (client.user) {
+      wire();
+    } else {
+      client.once('ready', wire);
+    }
+    return this;
+  }
+
+  /**
+   * One-call Oceanic.js wiring — replaces the manual `init` + `packet` setup.
+   *
+   * Automatically:
+   * - Calls `manager.init(client.user.id)` once the client is ready
+   * - Forwards all raw `packet` events to `handleRawPacket()`
+   *
+   * @example
+   * ```ts
+   * const manager = new LavalinkManager({ ... });
+   * manager.useOceanic(client); // ← replaces 4 lines of boilerplate
+   * ```
+   */
+  useOceanic(client: OceanicClientLike): this {
+    const wire = () => {
+      this.init(client.user!.id);
+      client.on('packet', (packet: { t?: string; d?: unknown }) =>
+        this.handleRawPacket(packet),
+      );
+    };
     if (client.user) {
       wire();
     } else {

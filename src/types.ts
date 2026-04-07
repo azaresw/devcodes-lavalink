@@ -113,6 +113,31 @@ export interface DiscordJSClientLike {
   once(event: 'ready', listener: () => void): this;
   on(event: 'raw', listener: (packet: { t?: string; d?: unknown }) => void): this;
 }
+
+/**
+ * Minimal interface for an Eris-compatible client.
+ * Eris emits raw WebSocket frames via the `rawWS` event.
+ * Used by `LavalinkManager.useEris()` — does NOT require Eris as a dependency.
+ */
+export interface ErisClientLike {
+  user: { id: string } | null;
+  once(event: 'ready', listener: () => void): this;
+  /** Eris fires raw WS frames on `rawWS` with `{ t, d }` plus a shard id */
+  on(event: 'rawWS', listener: (packet: { t?: string; d?: unknown }, id: number) => void): this;
+}
+
+/**
+ * Minimal interface for an Oceanic.js-compatible client.
+ * Oceanic emits raw packets via the `packet` event.
+ * Used by `LavalinkManager.useOceanic()` — does NOT require Oceanic as a dependency.
+ */
+export interface OceanicClientLike {
+  user: { id: string } | null;
+  once(event: 'ready', listener: () => void): this;
+  /** Oceanic fires raw gateway packets on `packet` with `{ t, d }` */
+  on(event: 'packet', listener: (packet: { t?: string; d?: unknown }) => void): this;
+}
+
 export interface ManagerOptions {
   /** Lavalink node(s) to connect to */
   nodes: NodeOptions[];
