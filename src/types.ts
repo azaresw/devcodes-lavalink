@@ -175,6 +175,8 @@ export interface VoiceServerPayload {
   token:     string;
   endpoint:  string;
   sessionId: string;
+  /** Required for DAVE (Discord E2EE audio/video encryption). Lavalink v4.0.8+ */
+  channelId?: string;
 }
 
 // ── Voice ─────────────────────────────────────────────────────

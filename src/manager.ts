@@ -292,6 +292,7 @@ export class LavalinkManager extends EventEmitter {
       token:     data.token,
       endpoint:  data.endpoint,
       sessionId: player._voiceSessionId ?? '',
+      channelId: player.voiceChannelId || undefined,
     };
     this._voiceServers.set(data.guild_id, data);
     this._checkVoice(data.guild_id);
@@ -305,11 +306,13 @@ export class LavalinkManager extends EventEmitter {
     const player = this.players.get(guildId);
     if (!player?._voiceSessionId || !player?._voiceServer) return;
 
-    // Always rebuild with the latest sessionId — avoids stale-empty-session bug
-    // (VOICE_STATE_UPDATE and VOICE_SERVER_UPDATE can arrive in either order)
+    // Always rebuild with the latest sessionId and channelId:
+    // - sessionId avoids stale-empty-session bug (VOICE_STATE/SERVER can arrive in either order)
+    // - channelId is required for DAVE (Discord E2EE audio encryption, Lavalink v4.0.8+)
     player._voiceServer = {
       ...player._voiceServer,
       sessionId: player._voiceSessionId,
+      channelId: player.voiceChannelId || undefined,
     };
 
     player.node.updatePlayer(guildId, { voice: player._voiceServer })

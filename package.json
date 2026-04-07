@@ -1,6 +1,6 @@
 {
   "name": "devcodes-lavalink",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A full-featured Lavalink v4 client for discord.js — zero config, TypeScript-first, auto-reconnect, and built-in player persistence that survives full system reboots.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
