@@ -24,6 +24,39 @@ export type TrackEndReason =
   | 'replaced'
   | 'cleanup';
 
+/** SponsorBlock segment category */
+export type SponsorBlockCategory =
+  | 'sponsor'
+  | 'selfpromo'
+  | 'interaction'
+  | 'intro'
+  | 'outro'
+  | 'preview'
+  | 'music_offtopic'
+  | 'filler';
+
+/** A SponsorBlock segment that was skipped */
+export interface SponsorBlockSegment {
+  category: SponsorBlockCategory;
+  start:    number;
+  end:      number;
+}
+
+/** A single line from synced lyrics */
+export interface LyricsLine {
+  timestamp: number;
+  line:      string;
+}
+
+/** Full lyrics result from a LyricsFoundEvent */
+export interface LyricsResult {
+  sourceName:   string;
+  provider:     string;
+  text:         string | null;
+  lines:        LyricsLine[];
+  plugin:       Record<string, unknown>;
+}
+
 export type LoopMode = 'none' | 'track' | 'queue';
 
 export type Severity = 'common' | 'suspicious' | 'fault';
@@ -380,12 +413,43 @@ export interface LavalinkWebSocketClosedEvent {
   byRemote: boolean;
 }
 
+export interface LavalinkLyricsFoundEvent {
+  op:      'event';
+  type:    'LyricsFoundEvent';
+  guildId: string;
+  lyrics:  LyricsResult;
+}
+
+export interface LavalinkLyricsLineEvent {
+  op:      'event';
+  type:    'LyricsLineEvent';
+  guildId: string;
+  line:    LyricsLine;
+}
+
+export interface LavalinkLyricsNotFoundEvent {
+  op:      'event';
+  type:    'LyricsNotFoundEvent';
+  guildId: string;
+}
+
+export interface LavalinkSegmentSkippedEvent {
+  op:      'event';
+  type:    'SegmentSkippedEvent';
+  guildId: string;
+  segment: SponsorBlockSegment;
+}
+
 export type LavalinkEventPayload =
   | LavalinkTrackStartEvent
   | LavalinkTrackEndEvent
   | LavalinkTrackExceptionEvent
   | LavalinkTrackStuckEvent
-  | LavalinkWebSocketClosedEvent;
+  | LavalinkWebSocketClosedEvent
+  | LavalinkLyricsFoundEvent
+  | LavalinkLyricsLineEvent
+  | LavalinkLyricsNotFoundEvent
+  | LavalinkSegmentSkippedEvent;
 
 export type LavalinkPayload =
   | LavalinkReadyOp
@@ -432,4 +496,12 @@ export interface ManagerEventMap {
   trackError:     [player: import('./player').LavalinkPlayer, track: Track, exception: unknown];
   trackStuck:     [player: import('./player').LavalinkPlayer, track: Track, thresholdMs: number];
   queueEnd:       [player: import('./player').LavalinkPlayer];
+  positionUpdate: [player: import('./player').LavalinkPlayer, position: number];
+  autoplayFail:   [player: import('./player').LavalinkPlayer, query: string];
+  // Lyrics (requires Lavalink lyrics plugin)
+  lyricsFound:    [player: import('./player').LavalinkPlayer, lyrics: LyricsResult];
+  lyricsLine:     [player: import('./player').LavalinkPlayer, line: LyricsLine];
+  lyricsNotFound: [player: import('./player').LavalinkPlayer];
+  // SponsorBlock (requires Lavalink sponsorblock plugin)
+  segmentSkipped: [player: import('./player').LavalinkPlayer, segment: SponsorBlockSegment];
 }

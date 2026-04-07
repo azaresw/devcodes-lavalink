@@ -58,6 +58,14 @@ export type {
   DiscordJSClientLike,
   ErisClientLike,
   OceanicClientLike,
+
+  // Lyrics
+  LyricsResult,
+  LyricsLine,
+
+  // SponsorBlock
+  SponsorBlockCategory,
+  SponsorBlockSegment,
 } from './types';
 
 export type { PlayerState } from './player';

@@ -10,6 +10,7 @@ import type {
   PlayerUpdatePayload,
   SearchResult,
   Track,
+  SponsorBlockCategory,
 } from './types';
 
 // ── Internal raw Lavalink v4 response shapes ─────────────────
@@ -210,6 +211,29 @@ export class LavalinkNode extends EventEmitter {
     });
   }
 
+  /**
+   * Enable SponsorBlock segment skipping for a player.
+   * Requires the Lavalink SponsorBlock plugin to be installed server-side.
+   */
+  async setSponsorBlock(guildId: string, categories: SponsorBlockCategory[]): Promise<void> {
+    if (!this.sessionId) return;
+    await this._request(
+      `/v4/sessions/${this.sessionId}/players/${guildId}/sponsorblock/categories`,
+      { method: 'PUT', body: categories },
+    );
+  }
+
+  /**
+   * Disable all SponsorBlock segment skipping for a player.
+   */
+  async clearSponsorBlock(guildId: string): Promise<void> {
+    if (!this.sessionId) return;
+    await this._request(
+      `/v4/sessions/${this.sessionId}/players/${guildId}/sponsorblock/categories`,
+      { method: 'DELETE' },
+    );
+  }
+
   // ── Private helpers ───────────────────────────────────────────
 
   private async _request<T = void>(
@@ -304,6 +328,18 @@ export class LavalinkNode extends EventEmitter {
             if (ev.code !== 1_000) {
               player.connect().catch(() => { /* reconnect attempt */ });
             }
+            break;
+          case 'LyricsFoundEvent':
+            this.manager.emit('lyricsFound', player, ev.lyrics);
+            break;
+          case 'LyricsLineEvent':
+            this.manager.emit('lyricsLine', player, ev.line);
+            break;
+          case 'LyricsNotFoundEvent':
+            this.manager.emit('lyricsNotFound', player);
+            break;
+          case 'SegmentSkippedEvent':
+            this.manager.emit('segmentSkipped', player, ev.segment);
             break;
         }
         break;

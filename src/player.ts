@@ -9,6 +9,7 @@ import type {
   PersistedPlayerState,
   VoiceServerPayload,
   VoiceStatePayload,
+  SponsorBlockCategory,
 } from './types';
 import { LavalinkQueue } from './queue';
 import { FilterPresets } from './filters';
@@ -53,6 +54,8 @@ export class LavalinkPlayer {
   paused:  boolean;
   playing: boolean;
   loop:    LoopMode;
+  /** Automatically queue a related track when the queue runs out (default: false) */
+  autoplay: boolean;
   filters: Filters;
 
   /** Currently playing track, or null if idle */
@@ -85,6 +88,7 @@ export class LavalinkPlayer {
     this.paused         = false;
     this.playing        = false;
     this.loop           = 'none';
+    this.autoplay       = false;
     this.filters        = {};
     this.queue          = new LavalinkQueue();
   }
@@ -355,7 +359,13 @@ export class LavalinkPlayer {
     // Advance queue
     if (this.queue.isEmpty) {
       this.playing = false;
-      this.manager.emit('queueEnd', this);
+      if (this.autoplay) {
+        this._triggerAutoplay(track).catch(() => {
+          this.manager.emit('queueEnd', this);
+        });
+      } else {
+        this.manager.emit('queueEnd', this);
+      }
       this._save();
       return;
     }
@@ -421,7 +431,10 @@ export class LavalinkPlayer {
     this._clearPositionInterval();
     // Save position every 5 s while actively playing so seek-on-restore is close
     this._positionInterval = setInterval(() => {
-      if (this.playing && !this.paused) this._save();
+      if (this.playing && !this.paused) {
+        this.manager.emit('positionUpdate', this, this._state.position);
+        this._save();
+      }
     }, 5_000);
   }
 
@@ -430,5 +443,46 @@ export class LavalinkPlayer {
       clearInterval(this._positionInterval);
       this._positionInterval = null;
     }
+  }
+
+  // ── SponsorBlock ─────────────────────────────────────────────
+
+  /**
+   * Enable SponsorBlock segment skipping for this player.
+   * Requires the SponsorBlock Lavalink plugin to be installed on the server.
+   *
+   * @param categories - Segment categories to skip (e.g. `['sponsor', 'selfpromo']`)
+   */
+  async setSponsorBlock(categories: SponsorBlockCategory[]): Promise<this> {
+    await this.node.setSponsorBlock(this.guildId, categories);
+    return this;
+  }
+
+  /**
+   * Disable all SponsorBlock segment skipping for this player.
+   */
+  async clearSponsorBlock(): Promise<this> {
+    await this.node.clearSponsorBlock(this.guildId);
+    return this;
+  }
+
+  // ── Autoplay ─────────────────────────────────────────────────
+
+  /**
+   * @internal — called when `autoplay` is true and the queue runs out.
+   * Searches for a related track using the seed track's title + author.
+   */
+  private async _triggerAutoplay(seedTrack: Track): Promise<void> {
+    const query = `${seedTrack.info.title} ${seedTrack.info.author}`;
+    const result = await this.manager.search(query, seedTrack.info.sourceName as never).catch(() => null);
+    // Pick first track that isn't the one we just played
+    const next = result?.tracks?.find(t => t.encoded !== seedTrack.encoded);
+    if (!next) {
+      this.manager.emit('autoplayFail', this, query);
+      this.manager.emit('queueEnd', this);
+      return;
+    }
+    this.queue.add(next);
+    await this.play();
   }
 }
