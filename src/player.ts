@@ -358,12 +358,14 @@ export class LavalinkPlayer {
 
     // Advance queue
     if (this.queue.isEmpty) {
-      this.playing = false;
       if (this.autoplay) {
+        // Keep playing=true while we search so the player stays "active"
         this._triggerAutoplay(track).catch(() => {
+          this.playing = false;
           this.manager.emit('queueEnd', this);
         });
       } else {
+        this.playing = false;
         this.manager.emit('queueEnd', this);
       }
       this._save();
@@ -473,12 +475,18 @@ export class LavalinkPlayer {
    * Searches for a related track using the seed track's title + author.
    */
   private async _triggerAutoplay(seedTrack: Track): Promise<void> {
-    const query = `${seedTrack.info.title} ${seedTrack.info.author}`;
-    const result = await this.manager.search(query, seedTrack.info.sourceName as never).catch(() => null);
-    // Pick first track that isn't the one we just played
-    const next = result?.tracks?.find(t => t.encoded !== seedTrack.encoded);
+    // Search for a "mix" to get related tracks rather than the same song
+    const query = `ytsearch:${seedTrack.info.title} ${seedTrack.info.author} mix`;
+    const result = await this.manager.search(query).catch(() => null);
+
+    const tracks = result?.tracks ?? [];
+
+    // Prefer any track that isn't identical to the seed; fall back to [0]
+    const next = tracks.find(t => t.encoded !== seedTrack.encoded) ?? tracks[0] ?? null;
+
     if (!next) {
       this.manager.emit('autoplayFail', this, query);
+      this.playing = false;
       this.manager.emit('queueEnd', this);
       return;
     }
