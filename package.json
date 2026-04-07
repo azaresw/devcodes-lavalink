@@ -1,6 +1,6 @@
 {
   "name": "devcodes-lavalink",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A full-featured Lavalink v4 client for discord.js — zero config, TypeScript-first, auto-reconnect, and built-in player persistence that survives full system reboots.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,7 +32,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/azaresw/devcodes-lavalink.git"
+    "url": "git+https://github.com/azaresw/devcodes-lavalink.git"
   },
   "bugs": {
     "url": "https://discord.gg/ESh2Dp2xX9"
