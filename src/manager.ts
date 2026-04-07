@@ -305,10 +305,27 @@ export class LavalinkManager extends EventEmitter {
     const player = this.players.get(guildId);
     if (!player?._voiceSessionId || !player?._voiceServer) return;
 
+    // Always rebuild with the latest sessionId — avoids stale-empty-session bug
+    // (VOICE_STATE_UPDATE and VOICE_SERVER_UPDATE can arrive in either order)
+    player._voiceServer = {
+      ...player._voiceServer,
+      sessionId: player._voiceSessionId,
+    };
+
     player.node.updatePlayer(guildId, { voice: player._voiceServer })
       .then(async () => {
         const pending = this._pendingRestores.get(guildId);
-        if (!pending) return;
+        if (!pending) {
+          // If voice WS dropped mid-play (cleanup TrackEndReason), replay the track
+          const reconnectTrack = player._reconnectTrack;
+          if (reconnectTrack) {
+            player._reconnectTrack = null;
+            await new Promise<void>((resolve) => setTimeout(resolve, 800));
+            player.queue.add(reconnectTrack, 0);
+            await player.play().catch(() => { /* swallow */ });
+          }
+          return;
+        }
 
         this._pendingRestores.delete(guildId);
 

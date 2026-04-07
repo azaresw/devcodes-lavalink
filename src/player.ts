@@ -67,6 +67,9 @@ export class LavalinkPlayer {
   /** @internal — collected from Discord VOICE_SERVER_UPDATE */
   _voiceServer: VoiceServerPayload | null = null;
 
+  /** @internal — track to replay after voice WS reconnect (set when cleanup fires) */
+  _reconnectTrack: Track | null = null;
+
   /** @internal — interval handle for periodic position saves */
   private _positionInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -325,6 +328,15 @@ export class LavalinkPlayer {
 
     // Don't auto-advance if the track was explicitly stopped or replaced  
     if (reason === 'replaced' || reason === 'stopped') {
+      this._save();
+      return;
+    }
+
+    // Voice WS closed mid-play — preserve the track so voice reconnect can replay it
+    if (reason === 'cleanup') {
+      this._reconnectTrack = track;
+      this.playing = false;
+      this._clearPositionInterval();
       this._save();
       return;
     }
