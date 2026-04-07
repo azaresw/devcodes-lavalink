@@ -475,8 +475,8 @@ export class LavalinkPlayer {
    * Searches for a related track using the seed track's title + author.
    */
   private async _triggerAutoplay(seedTrack: Track): Promise<void> {
-    // Search for a "mix" to get related tracks rather than the same song
-    const query = `ytsearch:${seedTrack.info.title} ${seedTrack.info.author} mix`;
+    // manager.search() auto-prepends the platform prefix, so pass a plain query
+    const query = `${seedTrack.info.title} ${seedTrack.info.author} mix`;
     const result = await this.manager.search(query).catch(() => null);
 
     const tracks = result?.tracks ?? [];
